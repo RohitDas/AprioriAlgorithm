@@ -58,6 +58,44 @@ def enumerate_items(transactions):
     return items_to_enumerate_map
 
 
+def apriori_gen(F_1,
+                F_k,
+                k):
+        """
+            This function has 2 parts, 
+            1. Candidate Generation using the F_k * F_1 method
+            2. Candidate pruning
+        """
+        print("Generating candidates for k = " + str(k))
+        #Candidate Generation
+        candidate_itemsets = {}
+        for itemset in F_k:
+            itemset = set([itemset]) if k == 2 else set(itemset)
+            for item in F_1:
+                if not itemset.intersection(set([item])):
+                    candidate_itemsets.update({
+                        tuple(sorted(itemset.union({item}))) : 1
+                    })
+       
+        print("Candidates before pruning: ", len(candidate_itemsets))
+
+        #Candidate Pruning
+        candidates_to_prune = []
+        for candidate_itemset in candidate_itemsets:
+            for i in range(k):
+                item_to_remove = candidate_itemset[i]
+                itemset_to_check = tuple(sorted(set(candidate_itemset).difference(set([item_to_remove]))))
+                itemset_to_check = itemset_to_check[0] if k == 2 else itemset_to_check
+                if itemset_to_check not in F_k:
+                    candidates_to_prune.append(candidate_itemset)
+
+        for candidate_to_prune in candidates_to_prune:
+            candidate_itemsets.pop(candidate_to_prune, None)
+        
+        print("Candidates after pruning: ", len(candidate_itemsets))
+
+        return candidate_itemsets
+
 # To be implemented
 def generate_frequent_itemset(transactions, minsup):
 	'''Generate the frequent itemsets from transactions
@@ -78,9 +116,20 @@ def generate_frequent_itemset(transactions, minsup):
         items_to_enumerate_map = enumerate_items(transactions)
         #Generate k = 1 itemsets
         k = 1
-        k1_itemsets_map_count = get_k1_itemsets(items_to_enumerate_map, transactions, minsup)
-        print item_to_support_count
-	return [[]]
+        F_1 = get_k1_itemsets(items_to_enumerate_map, transactions, minsup)
+
+        level_to_frequent_itemsets_map = {}
+        level_to_frequent_itemsets_map.update({
+            1: F_1
+        })
+
+        F_k = F_1
+        while F_k:
+            k += 1
+            candidates_K = apriori_gen(F_1, F_k, k)
+            break
+
+        return [[]]
 
 # To be implemented
 def generate_association_rules(transactions, minsup, minconf):
