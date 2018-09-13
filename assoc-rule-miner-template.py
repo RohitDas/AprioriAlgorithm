@@ -96,6 +96,30 @@ def apriori_gen(F_1,
 
         return candidate_itemsets
 
+
+def return_itemsets_for_transaction(transaction,
+                                      k, prior):
+    """
+        This builds the hash tree of a transaction for the purpose of support
+        counting.
+    """
+    if len(transaction) < k:
+        return []
+    if  k == 1:
+        return [ prior + [t] for t in transaction]
+    else:
+        itemsets = []
+        for i in range(len(transaction)-k+1):
+                #get elements starting from that position.
+                new_prior = prior + [transaction[i]]
+                itemsets += return_itemsets_for_transaction(transaction[i+1:], k-1, new_prior)
+        return itemsets
+
+def build_candidate_hash_tree(candidates,
+                              branch_factor):
+    pass
+
+
 # To be implemented
 def generate_frequent_itemset(transactions, minsup):
 	'''Generate the frequent itemsets from transactions
@@ -127,6 +151,7 @@ def generate_frequent_itemset(transactions, minsup):
         while F_k:
             k += 1
             candidates_K = apriori_gen(F_1, F_k, k)
+            
             break
 
         return [[]]
