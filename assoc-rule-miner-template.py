@@ -124,8 +124,11 @@ def build_candidate_hash_tree(candidates,k):
 
 
 def update_support_counts(itemsets,
-                          support_count_hash_tree):
-    pass
+                          support_count_hash_tree,
+                          candidates_K):
+    for itemset in itemsets:
+        if support_count_hash_tree.search(itemset):
+            candidates_K[itemset] += 1
 
 def support_counting(transactions,
                      candidates_K, k):
@@ -134,7 +137,24 @@ def support_counting(transactions,
     for transaction in transactions:
         possible_k_itemsets_for_transaction = return_itemsets_for_transaction(transaction, k, [])
         update_support_counts(possible_k_itemsets_for_transaction, 
-                support_count_hash_tree)
+                support_count_hash_tree, candidates_K)
+
+
+def candidate_elimination(candidates_K,
+                          minsup):
+    """
+        This function eliminates those candidates whose support is less than minsup
+    """
+    infrequent_itemsets = []
+    for key, value in candidates_K.iteritems():
+        if value < minsup:
+            infrequent_itemsets.append(key)
+
+    for infrequent_item in infrequent_itemsets:
+            candidates_K.pop(infrequent_item, None)
+
+def aggregrated_frequent_items(level_to_frequent_itemsets_map):
+    pass
 
 # To be implemented
 def generate_frequent_itemset(transactions, minsup):
@@ -172,9 +192,14 @@ def generate_frequent_itemset(transactions, minsup):
             k += 1
             candidates_K = apriori_gen(F_1, F_k, k)
             support_counting(enumerated_transactions, candidates_K, k)
-            break
-
-        return [[]]
+            print candidates_K
+            candidate_elimination(candidates_K, minsup*len(enumerated_transactions))
+            print candidates_K
+            level_to_frequent_itemsets_map.update({
+                k: candidates_K
+            })
+            F_k = candidates_K
+        return aggregrated_frequent_items(level_to_frequent_itemsets_map)
 
 # To be implemented
 def generate_association_rules(transactions, minsup, minconf):

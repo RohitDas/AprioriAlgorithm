@@ -86,6 +86,12 @@ class Node(object):
         new_node.add_elements(self.values)
         return new_node
 
+    def search(self, element):
+        if self.is_leaf:
+            return element in self.values
+        else:
+            child_index = element[self.level] % self.prime_k
+            return self.children.get(child_index).search(element)
 
     def visualize(self):
         if self.is_leaf:
@@ -111,4 +117,7 @@ if __name__ == "__main__":
     elements = [(1,2,3), (1,2,4), (4,5,7), (1,2,5), (4,5,8), (1,5,9), (1,3,6),(2,3,4), (5,6,7), (3,4,5), (3,5,6), (3,5,7), (6,8,9), (3,6,8), (3,6,7)]
     node.add_elements(elements)
     node.visualize()
+
+    #Start Searching
+    print node.search((1,12,13))
 
