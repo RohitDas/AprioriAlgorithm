@@ -1,6 +1,7 @@
 import sys
 import os
 
+from hash_tree import Node
 
 def read_csv(filepath):
 	'''Read transactions from csv_file specified by filepath
@@ -28,8 +29,8 @@ def get_k1_itemsets(
         """
         item_to_support_count = {}
         for transaction in transactions:
-            enumerated_transaction = map(lambda x: items_to_enumerate_map[x], transaction)
-            for item in enumerated_transaction:
+            #enumerated_transaction = map(lambda x: items_to_enumerate_map[x], transaction)
+            for item in transaction:
                 if item not in item_to_support_count:
                     item_to_support_count[item] = 1
                 else:
@@ -104,9 +105,9 @@ def return_itemsets_for_transaction(transaction,
         counting.
     """
     if len(transaction) < k:
-        return []
+        return tuple([])
     if  k == 1:
-        return [ prior + [t] for t in transaction]
+        return [ tuple(prior + [t]) for t in transaction]
     else:
         itemsets = []
         for i in range(len(transaction)-k+1):
@@ -115,10 +116,25 @@ def return_itemsets_for_transaction(transaction,
                 itemsets += return_itemsets_for_transaction(transaction[i+1:], k-1, new_prior)
         return itemsets
 
-def build_candidate_hash_tree(candidates,
-                              branch_factor):
+def build_candidate_hash_tree(candidates,k):
+    hash_tree = Node(k,5,5,False,False,True,0)
+    hash_tree.add_elements(candidates)
+    hash_tree.visualize()
+    return hash_tree
+
+
+def update_support_counts(itemsets,
+                          support_count_hash_tree):
     pass
 
+def support_counting(transactions,
+                     candidates_K, k):
+
+    support_count_hash_tree = build_candidate_hash_tree(candidates_K.keys(), k)
+    for transaction in transactions:
+        possible_k_itemsets_for_transaction = return_itemsets_for_transaction(transaction, k, [])
+        update_support_counts(possible_k_itemsets_for_transaction, 
+                support_count_hash_tree)
 
 # To be implemented
 def generate_frequent_itemset(transactions, minsup):
@@ -138,10 +154,14 @@ def generate_frequent_itemset(transactions, minsup):
         
         #Enumerate the items from the transaction
         items_to_enumerate_map = enumerate_items(transactions)
+        enumerated_transactions = map(lambda transaction: sorted(map(lambda x: items_to_enumerate_map[x], transaction)), 
+                                            transactions)
+        print enumerated_transactions
         #Generate k = 1 itemsets
         k = 1
-        F_1 = get_k1_itemsets(items_to_enumerate_map, transactions, minsup)
-
+        #F_1 = get_k1_itemsets(items_to_enumerate_map, transactions, minsup)
+        F_1 = get_k1_itemsets(items_to_enumerate_map, enumerated_transactions, minsup)
+        
         level_to_frequent_itemsets_map = {}
         level_to_frequent_itemsets_map.update({
             1: F_1
@@ -151,7 +171,7 @@ def generate_frequent_itemset(transactions, minsup):
         while F_k:
             k += 1
             candidates_K = apriori_gen(F_1, F_k, k)
-            
+            support_counting(enumerated_transactions, candidates_K, k)
             break
 
         return [[]]

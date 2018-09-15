@@ -1,11 +1,13 @@
 class Node(object):
-    def __init__(self, 
+    def __init__(self,
+                 k,
                  prime_k, 
                  leaf_load,
                  is_internal,
                  is_leaf,
                  is_root,
                  level):
+        self.k = k
         self.prime_k = prime_k
         self.leaf_load = leaf_load
         self.is_root = is_root
@@ -29,7 +31,7 @@ class Node(object):
         if not self.is_leaf:
             for i in range(self.prime_k):
                 self.children.update({
-                    i: Node(self.prime_k, self.leaf_load,
+                    i: Node(self.k,self.prime_k, self.leaf_load,
                             False, True, 
                             False, self.level+1)
                 })
@@ -38,13 +40,17 @@ class Node(object):
                     val):
         if self.is_leaf:
             self.values.add(val)
-            if self.is_overloaded() and self.level <= self.prime_k:
+            if self.is_overloaded() and self.level < self.k:
                 return self.divide_leaf_node()
             else:
                 return None
         else:
             assert self.is_root or self.is_internal, "A leaf can never be neither of leaf, root or the internal node"
-            child_index = val[self.level] % self.prime_k
+            try:
+                child_index = val[self.level] % self.prime_k
+            except:
+                print(val, self.level)
+                child_index = val[self.level] % self.prime_k
             result = self.children.get(child_index).add_element(val)
             if result:
                 self.children[child_index] = result
@@ -71,7 +77,7 @@ class Node(object):
             When the load gets a lot, this function divides the leaf node and
             returns a new node.
         """
-        new_node = Node(self.prime_k, 
+        new_node = Node(self.k,self.prime_k, 
                         self.leaf_load,
                         True,
                         False,
@@ -95,13 +101,13 @@ class Node(object):
 
 
 if __name__ == "__main__":
-    prime_k = 1
-    leaf_load = 3
+    prime_k = 5
+    leaf_load = 5
     is_internal = False
     is_leaf = False
     is_root = True
     level = 0
-    node = Node(prime_k, leaf_load, is_internal, is_leaf, is_root, level)
+    node = Node(3, prime_k, leaf_load, is_internal, is_leaf, is_root, level)
     elements = [(1,2,3), (1,2,4), (4,5,7), (1,2,5), (4,5,8), (1,5,9), (1,3,6),(2,3,4), (5,6,7), (3,4,5), (3,5,6), (3,5,7), (6,8,9), (3,6,8), (3,6,7)]
     node.add_elements(elements)
     node.visualize()
