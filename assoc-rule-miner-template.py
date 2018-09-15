@@ -1,9 +1,10 @@
+from __future__ import division
 import sys
 import os
-
 from hash_tree import Node
 
 LEVEL_TO_FREQUENT_ITEMSETS_MAP = None
+ITEMS_TO_INDEX_MAP = None
 
 def read_csv(filepath):
 	'''Read transactions from csv_file specified by filepath
@@ -184,6 +185,7 @@ def generate_frequent_itemset(transactions, minsup):
 		The meaning of the output is as follows: itemset {margarine}, {ready soups}, {citrus fruit, semi-finished bread}, {tropical fruit, yogurt, coffee}, {whole milk} are all frequent itemset
 
 	'''
+        global LEVEL_TO_FREQUENT_ITEMSETS_MAP, ITEMS_TO_INDEX_MAP
         print len(transactions),minsup
         #Enumerate the items from the transaction
         items_to_enumerate_map, index_to_items_map = enumerate_items(transactions)
@@ -208,6 +210,8 @@ def generate_frequent_itemset(transactions, minsup):
                 k: candidates_K
             })
             F_k = candidates_K
+        LEVEL_TO_FREQUENT_ITEMSETS_MAP = level_to_frequent_itemsets_map
+        ITEMS_TO_INDEX_MAP = items_to_enumerate_map
         return aggregrated_frequent_items(level_to_frequent_itemsets_map,
                                           index_to_items_map)
 
@@ -215,33 +219,66 @@ def generate_frequent_itemset(transactions, minsup):
 def get_one_item_consequent(frequent_itemset):
     one_item_consequents = []
     for item in frequent_itemset:
-        print item
-        one_item_consequents.append([(set([item])])
+        one_item_consequents.append(set([item]))
     return one_item_consequents
 
 def get_support(frequent_itemset):
+    global LEVEL_TO_FREQUENT_ITEMSETS_MAP, ITEMS_TO_INDEX_MAP
     S = len(frequent_itemset)
-    return LEVEL_TO_FREQUENT_ITEMSETS_MAP[S].get(frequent_itemset, 0)
+    print(LEVEL_TO_FREQUENT_ITEMSETS_MAP[S])
+    print(frequent_itemset)
+    enumerated_frequent_itemset = tuple(sorted([ITEMS_TO_INDEX_MAP[item] for item in frequent_itemset]))
+    if S ==  1:
+        enumerated_frequent_itemset = enumerated_frequent_itemset[0]
+    print("********")
+    print(LEVEL_TO_FREQUENT_ITEMSETS_MAP[S][enumerated_frequent_itemset]), enumerated_frequent_itemset
+    return LEVEL_TO_FREQUENT_ITEMSETS_MAP[S].get(enumerated_frequent_itemset, 0)
 
-def apriori_gen(H_m):
-    pass
+def apriori_gen_rule(frequent_itemset,H_m):
+    consequent_length = len(H_m[0])
+    print(consequent_length)
+    completed_rules = []
+    print(frequent_itemset)
+    for consequent in H_m:
+        completed_rules.append([frequent_itemset.difference(consequent), consequent])
+    print completed_rules
+
+    new_rules = {}
+    for i in range(H_m):
+        for j in range(j, H_m):
+            antecedent_a = completed_rules[i]
+            antecedent_b = completed_rules[j]
+            intersection_a_b = antecedent_a.intersection(antecedent_b)
+            if len(intersection_a_b)  == (consequent_length-1):
+                new_consequent = frequent_itemset.difference(intersection_a_b)
+                new_rules.update({
+                    tuple(new_consequent): 1
+                })
+    return new_rules.keys()
 
 def ap_genrules(frequent_itemset,
                 H_1,
                 minconf):
     k = len(frequent_itemset)
-    m = len(H1[1])
+    m = len(H_1[0])
     H_m  = H_1
     rules = []
     if k > m + 1:
-        H_m = apriori_gen(H_m)
+        H_m = apriori_gen_rule(H_m)
         H_m_new = []
         for h_m in H_m:
             confidence = get_support(frequent_itemset)/get_support(frequent_itemset.difference(h_m))
+            print("Conf: ", confidence)
             if confidence >= minconf:
-                rules.append((frequent_itemset.difference(h_m), h_m))
+                rules.append(h_m)
                 H_m_new.append(h_m)
         rules += ap_genrules(frequent_itemset, H_m_new)
+    else:
+        for h_m in H_m:
+            confidence = get_support(frequent_itemset)/get_support(frequent_itemset.difference(h_m))
+            print("Conf: ", confidence)
+            if confidence >= minconf:
+                rules.append(h_m)
     return rules
 
 # To be implemented
@@ -262,12 +299,18 @@ def generate_association_rules(transactions, minsup, minconf):
 
 	'''
         frequent_itemsets = generate_frequent_itemset(transactions, minsup)
+        association_rules = []
         for frequent_itemset in frequent_itemsets:
             if len(frequent_itemset) >= 2:
+                print("Frequent Itemsets")
                 print(frequent_itemset)
-                H_1 = get_one_item_consequent(frequent_itemset)
-                print(H_1)
-                ap_genrules(frequent_itemset, H_1)
+                H_1 = get_one_item_consequent(set(frequent_itemset))
+                rules = ap_genrules(set(frequent_itemset), H_1, minconf)
+                print("Rules")
+                print(rules)
+                for rule in rules:
+                    association_rules.append(list(set(frequent_itemset).difference(rule)) + ["=>"] + [list(rule)])
+        print(association_rules)            
 	return [[]]
 
 
