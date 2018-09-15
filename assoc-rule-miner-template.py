@@ -78,7 +78,7 @@ def apriori_gen(F_1,
             for item in F_1:
                 if not itemset.intersection(set([item])):
                     candidate_itemsets.update({
-                        tuple(sorted(itemset.union({item}))) : 1
+                        tuple(sorted(itemset.union({item}))) : 0
                     })
        
         print("Candidates before pruning: ", len(candidate_itemsets))
@@ -182,17 +182,15 @@ def generate_frequent_itemset(transactions, minsup):
 		The meaning of the output is as follows: itemset {margarine}, {ready soups}, {citrus fruit, semi-finished bread}, {tropical fruit, yogurt, coffee}, {whole milk} are all frequent itemset
 
 	'''
-        
+        print len(transactions),minsup
         #Enumerate the items from the transaction
         items_to_enumerate_map, index_to_items_map = enumerate_items(transactions)
         enumerated_transactions = map(lambda transaction: sorted(map(lambda x: items_to_enumerate_map[x], transaction)), 
                                             transactions)
-        print enumerated_transactions
         #Generate k = 1 itemsets
         k = 1
         #F_1 = get_k1_itemsets(items_to_enumerate_map, transactions, minsup)
         F_1 = get_k1_itemsets(items_to_enumerate_map, enumerated_transactions, minsup)
-        
         level_to_frequent_itemsets_map = {}
         level_to_frequent_itemsets_map.update({
             1: F_1
@@ -203,9 +201,7 @@ def generate_frequent_itemset(transactions, minsup):
             k += 1
             candidates_K = apriori_gen(F_1, F_k, k)
             support_counting(enumerated_transactions, candidates_K, k)
-            print candidates_K
             candidate_elimination(candidates_K, minsup*len(enumerated_transactions))
-            print candidates_K
             level_to_frequent_itemsets_map.update({
                 k: candidates_K
             })
