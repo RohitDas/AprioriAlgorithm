@@ -37,7 +37,7 @@ def get_k1_itemsets(
                     item_to_support_count[item] += 1
 
         #Calculate infrequent items
-        infrequent_items = filter(lambda x: item_to_support_count[x] <= minsup*len(transactions), item_to_support_count.keys())
+        infrequent_items = filter(lambda x: item_to_support_count[x] < minsup*len(transactions), item_to_support_count.keys())
         for infrequent_item in infrequent_items:
             item_to_support_count.pop(infrequent_item, None)
         return item_to_support_count
@@ -51,12 +51,15 @@ def enumerate_items(transactions):
         items.update(transaction)
     sorted_items = sorted(items)
     
-    items_to_enumerate_map = {}
+    items_to_enumerate_map, index_to_items_map = {}, {}
     for index, sorted_item in enumerate(sorted_items):
         items_to_enumerate_map.update({
             sorted_item: index
         })
-    return items_to_enumerate_map
+        index_to_items_map.update({
+            index: sorted_item
+        })
+    return items_to_enumerate_map, index_to_items_map
 
 
 def apriori_gen(F_1,
@@ -153,8 +156,16 @@ def candidate_elimination(candidates_K,
     for infrequent_item in infrequent_itemsets:
             candidates_K.pop(infrequent_item, None)
 
-def aggregrated_frequent_items(level_to_frequent_itemsets_map):
-    pass
+def aggregrated_frequent_items(level_to_frequent_itemsets_map,
+                               index_to_items_map):
+    frequent_items = []
+    for level, level_hash in level_to_frequent_itemsets_map.iteritems():
+        if level == 1:
+            frequent_items += map(lambda x: [index_to_items_map[x]], level_hash.keys())
+        else:
+            frequent_items += map(lambda x: map(lambda y: index_to_items_map[y],x), level_hash.keys())
+    print len(frequent_items), frequent_items
+    return frequent_items
 
 # To be implemented
 def generate_frequent_itemset(transactions, minsup):
@@ -173,7 +184,7 @@ def generate_frequent_itemset(transactions, minsup):
 	'''
         
         #Enumerate the items from the transaction
-        items_to_enumerate_map = enumerate_items(transactions)
+        items_to_enumerate_map, index_to_items_map = enumerate_items(transactions)
         enumerated_transactions = map(lambda transaction: sorted(map(lambda x: items_to_enumerate_map[x], transaction)), 
                                             transactions)
         print enumerated_transactions
@@ -199,7 +210,8 @@ def generate_frequent_itemset(transactions, minsup):
                 k: candidates_K
             })
             F_k = candidates_K
-        return aggregrated_frequent_items(level_to_frequent_itemsets_map)
+        return aggregrated_frequent_items(level_to_frequent_itemsets_map,
+                                          index_to_items_map)
 
 # To be implemented
 def generate_association_rules(transactions, minsup, minconf):
