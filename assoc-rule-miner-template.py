@@ -3,6 +3,8 @@ import os
 
 from hash_tree import Node
 
+LEVEL_TO_FREQUENT_ITEMSETS_MAP = None
+
 def read_csv(filepath):
 	'''Read transactions from csv_file specified by filepath
 	Args:
@@ -209,6 +211,39 @@ def generate_frequent_itemset(transactions, minsup):
         return aggregrated_frequent_items(level_to_frequent_itemsets_map,
                                           index_to_items_map)
 
+
+def get_one_item_consequent(frequent_itemset):
+    one_item_consequents = []
+    for item in frequent_itemset:
+        print item
+        one_item_consequents.append([(set([item])])
+    return one_item_consequents
+
+def get_support(frequent_itemset):
+    S = len(frequent_itemset)
+    return LEVEL_TO_FREQUENT_ITEMSETS_MAP[S].get(frequent_itemset, 0)
+
+def apriori_gen(H_m):
+    pass
+
+def ap_genrules(frequent_itemset,
+                H_1,
+                minconf):
+    k = len(frequent_itemset)
+    m = len(H1[1])
+    H_m  = H_1
+    rules = []
+    if k > m + 1:
+        H_m = apriori_gen(H_m)
+        H_m_new = []
+        for h_m in H_m:
+            confidence = get_support(frequent_itemset)/get_support(frequent_itemset.difference(h_m))
+            if confidence >= minconf:
+                rules.append((frequent_itemset.difference(h_m), h_m))
+                H_m_new.append(h_m)
+        rules += ap_genrules(frequent_itemset, H_m_new)
+    return rules
+
 # To be implemented
 def generate_association_rules(transactions, minsup, minconf):
 	'''Mine the association rules from transactions
@@ -226,8 +261,13 @@ def generate_association_rules(transactions, minsup, minconf):
 	
 
 	'''
-
-        
+        frequent_itemsets = generate_frequent_itemset(transactions, minsup)
+        for frequent_itemset in frequent_itemsets:
+            if len(frequent_itemset) >= 2:
+                print(frequent_itemset)
+                H_1 = get_one_item_consequent(frequent_itemset)
+                print(H_1)
+                ap_genrules(frequent_itemset, H_1)
 	return [[]]
 
 
